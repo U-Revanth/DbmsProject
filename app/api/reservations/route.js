@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 
-export async function GET(request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
@@ -14,24 +14,14 @@ export async function GET(request) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-
-    if (userId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const reservations = await prisma.reservation.findMany({
       where: {
-        user_id: userId,
+        user_id: session.user.id,
       },
       include: {
         car: {
           include: {
-            office: {
+            garage: {
               select: {
                 name: true,
                 city: true,
@@ -59,7 +49,7 @@ export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

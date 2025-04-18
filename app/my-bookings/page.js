@@ -1,111 +1,177 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { format } from 'date-fns';
 
 export default function MyBookings() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
+      return;
+    }
+
+    if (status === 'authenticated') {
+      fetchBookings();
     }
   }, [status, router]);
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      if (session?.user?.id) {
-        try {
-          const response = await fetch(`/api/reservations?userId=${session.user.id}`);
-          const data = await response.json();
-          setBookings(data);
-        } catch (error) {
-          console.error('Error fetching bookings:', error);
-        } finally {
-          setLoading(false);
-        }
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/reservations');
+      const data = await response.json();
+      
+      if (response.ok) {
+        setBookings(data);
+      } else {
+        setError(data.error || 'Failed to fetch bookings');
       }
-    };
+    } catch (err) {
+      setError('Failed to fetch bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchBookings();
-  }, [session]);
+  const handleCancel = async (reservationId) => {
+    if (!window.confirm('Are you sure you want to cancel this reservation?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh the bookings list
+        await fetchBookings();
+        // Show success message
+        alert('Reservation cancelled successfully!');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to cancel reservation');
+      }
+    } catch (err) {
+      setError('Failed to cancel reservation');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (status === 'loading' || loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-4">Please Sign In</h2>
+          <p className="text-gray-600 mb-4">You need to be signed in to view your bookings.</p>
+          <button
+            onClick={() => router.push('/auth/signin')}
+            className="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <main className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Bookings</h1>
-        
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">My Bookings</h1>
+          <button
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            ← Back to Home
+          </button>
+        </div>
+
+        {error && (
+          <div className="text-red-500 mb-4">{error}</div>
+        )}
+
         {bookings.length === 0 ? (
-          <div className="bg-white p-6 rounded-lg shadow-md text-center">
-            <p className="text-gray-600">You haven't made any bookings yet.</p>
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-semibold mb-4">No bookings found</h2>
+            <p className="text-gray-600 mb-4">You haven't made any reservations yet.</p>
             <button
-              onClick={() => router.push('/book-car')}
-              className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+              onClick={() => router.push('/')}
+              className="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
-              Book a Car Now
+              Book a Car
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Car Details
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Garage
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pickup Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Return Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Price
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {bookings.map((booking) => (
-                  <tr key={booking.reservation_no} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {booking.car.model} {booking.car.make}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Year: {booking.car.year}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{booking.car.office.name}</div>
-                      <div className="text-sm text-gray-500">{booking.car.office.city}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(booking.pickup_date).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(booking.return_date).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${booking.total_price?.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-6">
+            {bookings.map((booking) => (
+              <div
+                key={booking.reservation_id}
+                className="bg-white p-6 rounded-lg shadow-md"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-2">
+                      {booking.car.make} {booking.car.model}
+                    </h2>
+                    <p className="text-gray-600">Year: {booking.car.year}</p>
+                    <p className="text-gray-600">
+                      Location: {booking.car.garage.name}, {booking.car.garage.city}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">
+                      Pickup: {format(new Date(booking.pickup_date), 'MMM dd, yyyy')}
+                    </p>
+                    <p className="text-gray-600">
+                      Return: {format(new Date(booking.return_date), 'MMM dd, yyyy')}
+                    </p>
+                    <p className="text-gray-600">
+                      Total Price: ${Number(booking.total_price).toFixed(2)}
+                    </p>
+                    <p className={`font-semibold ${
+                      booking.status === 'confirmed' ? 'text-green-600' :
+                      booking.status === 'cancelled' ? 'text-red-600' :
+                      'text-yellow-600'
+                    }`}>
+                      Status: {booking.status}
+                    </p>
+                  </div>
+                </div>
+                {booking.status === 'confirmed' && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={() => handleCancel(booking.reservation_id)}
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Cancel Reservation
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 } 
