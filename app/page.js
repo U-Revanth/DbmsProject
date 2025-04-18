@@ -1,57 +1,84 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { Button } from "@/components/ui/button";
+import { Car, Calendar, MapPin, Shield } from 'lucide-react';
 
 export default function Home() {
-  const router = useRouter();
+  const { data: session, status } = useSession();
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to Car Rental
-          </h1>
-          <p className="text-xl text-gray-600">
-            Choose your next adventure with our premium car rental service
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Link href="/garages">
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer border border-gray-200">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Book a Car</h2>
-                <p className="text-gray-600">
-                  Browse our selection of premium vehicles and find your perfect ride
-                </p>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Premium Car Rental
+              <span className="block text-4xl md:text-5xl font-normal mt-2">Experience the Freedom</span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              Discover our fleet of premium vehicles and enjoy a seamless rental experience with flexible booking options.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
+                <Link href="/garages">Book Now</Link>
+              </Button>
+              {!session && (
+                <Button asChild variant="outline" size="lg" className="border-gray-900 text-gray-900 hover:bg-gray-50">
+                  <Link href="/api/auth/signin">Sign In</Link>
+                </Button>
+              )}
             </div>
-          </Link>
-
-          <Link href="/my-bookings">
-            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer border border-gray-200">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">My Bookings</h2>
-                <p className="text-gray-600">
-                  View and manage your current and past car rentals
-                </p>
-              </div>
-            </div>
-          </Link>
+          </div>
         </div>
       </div>
-    </main>
+
+      {/* Features Section */}
+      <div className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-6 bg-gray-50 rounded-full flex items-center justify-center">
+                <Car className="w-8 h-8 text-gray-900" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Wide Selection</h3>
+              <p className="text-gray-600">Choose from our diverse fleet of premium vehicles to suit your needs.</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-6 bg-gray-50 rounded-full flex items-center justify-center">
+                <Calendar className="w-8 h-8 text-gray-900" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Flexible Booking</h3>
+              <p className="text-gray-600">Book your car for any duration with our easy-to-use reservation system.</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-6 bg-gray-50 rounded-full flex items-center justify-center">
+                <Shield className="w-8 h-8 text-gray-900" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Secure & Reliable</h3>
+              <p className="text-gray-600">Enjoy peace of mind with our secure payment system and reliable service.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Ready to Hit the Road?</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              Start your journey with us today. Browse our available cars and find the perfect match for your needs.
+            </p>
+            <Button asChild size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
+              <Link href="/garages">Explore Our Fleet</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
