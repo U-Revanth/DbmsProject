@@ -61,61 +61,59 @@ model VerificationToken {
 }
 
 model car {
-  plate_id          String        @id @db.VarChar(8)
-  model             String        @db.VarChar(32)
-  make              String        @db.VarChar(32)
-  year              Int           @db.Year
+  car_id            String        @id @db.VarChar(20)
+  garage_id         Int
+  model             String        @db.VarChar(50)
+  make              String        @db.VarChar(50)
+  year              Int
   price_per_day     Decimal       @db.Decimal(10, 2)
   registration_date DateTime?     @default(now()) @db.DateTime(0)
-  office_id         Int
-  office            office        @relation(fields: [office_id], references: [office_id], onDelete: Cascade, onUpdate: NoAction, map: "car_office_fk")
-  car_photos        car_photos[]
-  car_status        car_status[]
+  status            car_status?   @default(available)
+  garage            garage        @relation(fields: [garage_id], references: [garage_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_car_garage")
   reservation       reservation[]
 
-  @@index([office_id], map: "car_office_fk")
-}
-
-model car_photos {
-  plate_id  String @db.VarChar(8)
-  photo_url String @db.VarChar(512)
-  car       car    @relation(fields: [plate_id], references: [plate_id], onDelete: Cascade, onUpdate: NoAction, map: "car_photos_fk")
-
-  @@id([plate_id, photo_url])
-}
-
-model car_status {
-  plate_id    String   @db.VarChar(8)
-  status_code Int      @default(0) @db.TinyInt
-  status_date DateTime @default(now()) @db.DateTime(0)
-  car         car      @relation(fields: [plate_id], references: [plate_id], onDelete: Cascade, onUpdate: NoAction, map: "car_status_fk")
-
-  @@id([plate_id, status_code, status_date])
-}
-
-model office {
-  office_id   Int    @id @default(autoincrement())
-  name        String @db.VarChar(32)
-  email       String @unique(map: "email") @db.VarChar(64)
-  phone_no    String @unique(map: "phone_no") @db.Char(11)
-  country     String @db.VarChar(64)
-  city        String @db.VarChar(64)
-  building_no String @db.VarChar(16)
-  car         car[]
+  @@index([garage_id], map: "fk_car_garage")
 }
 
 model reservation {
-  reservation_no Int       @id @default(autoincrement())
+  reservation_id Int                 @id @default(autoincrement())
   user_id        String
-  plate_id       String    @db.VarChar(8)
-  reserve_date   DateTime? @default(now()) @db.DateTime(0)
-  pickup_date    DateTime  @db.DateTime(0)
-  return_date    DateTime  @db.DateTime(0)
-  payment_date   DateTime? @db.DateTime(0)
-  total_price    Decimal?  @db.Decimal(10, 2)
-  car            car       @relation(fields: [plate_id], references: [plate_id], onDelete: Cascade, onUpdate: NoAction, map: "reservation_car_fk")
-  users          User      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "reservation_user_fk")
+  car_id         String              @db.VarChar(20)
+  reserve_date   DateTime?           @default(now()) @db.DateTime(0)
+  pickup_date    DateTime            @db.DateTime(0)
+  return_date    DateTime            @db.DateTime(0)
+  total_price    Decimal             @db.Decimal(10, 2)
+  status         reservation_status? @default(pending)
+  car            car                 @relation(fields: [car_id], references: [car_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_reservation_car")
+  users          User                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "reservation_user_fk")
 
-  @@index([plate_id], map: "reservation_car_fk")
-  @@index([user_id], map: "reservation_user_fk")
+  @@index([car_id], map: "fk_reservation_car")
+  @@index([user_id], map: "fk_reservation_user")
+}
+
+model garage {
+  garage_id Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  address   String   @db.VarChar(255)
+  city      String   @db.VarChar(50)
+  state     String?  @db.VarChar(50)
+  country   String   @db.VarChar(50)
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+  phone     String?  @db.VarChar(20)
+  car       car[]
+}
+
+enum reservation_status {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum car_status {
+  available
+  rented
+  maintenance
+  unavailable
 }
