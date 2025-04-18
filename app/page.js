@@ -1,58 +1,56 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Home() {
-  const [garages, setGarages] = useState([]);
-  const [selectedGarage, setSelectedGarage] = useState(null);
-  const [error, setError] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    fetchGarages();
-  }, []);
-
-  const fetchGarages = async () => {
-    try {
-      const response = await fetch('/api/garages');
-      const data = await response.json();
-      if (response.ok) {
-        setGarages(data);
-      } else {
-        setError(data.error || 'Failed to fetch garages');
-      }
-    } catch (err) {
-      setError('Failed to fetch garages');
-    }
-  };
-
-  const handleGarageSelect = (garage) => {
-    setSelectedGarage(garage);
-    router.push(`/garages/${garage.garage_id}`);
-  };
-
   return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-8">Select a Garage</h1>
-      
-      {error && (
-        <div className="text-red-500 mb-4">{error}</div>
-      )}
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Welcome to Car Rental
+          </h1>
+          <p className="text-xl text-gray-600">
+            Choose your next adventure with our premium car rental service
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {garages.map((garage) => (
-          <div
-            key={garage.garage_id}
-            className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => handleGarageSelect(garage)}
-          >
-            <h2 className="text-xl font-semibold mb-2">{garage.name}</h2>
-            <p className="text-gray-600">{garage.address}</p>
-            <p className="text-gray-600">{garage.city}, {garage.country}</p>
-            {garage.phone && <p className="text-gray-600">Phone: {garage.phone}</p>}
-          </div>
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <Link href="/garages">
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer border border-gray-200">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Book a Car</h2>
+                <p className="text-gray-600">
+                  Browse our selection of premium vehicles and find your perfect ride
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/my-bookings">
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer border border-gray-200">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">My Bookings</h2>
+                <p className="text-gray-600">
+                  View and manage your current and past car rentals
+                </p>
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
     </main>
   );

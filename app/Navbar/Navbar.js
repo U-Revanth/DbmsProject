@@ -8,9 +8,7 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
-
-  const { session ,status } = useSession();
-
+  const { session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
 
@@ -18,23 +16,24 @@ export default function Navbar() {
 
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'Search', path: '/search' },
-    { name: 'Blood', path: '/blood' },
-    { name: 'Pharmacy', path: '/pharmacy' },
+    { name: 'Book Cars', path: '/garages' },
+    { name: 'My Bookings', path: '/my-bookings' },
   ];
 
   const linkStyle = (path) =>
-    `hover:text-green-600 font-medium ${
-      pathname === path ? 'text-green-700 font-semibold underline underline-offset-4' : 'text-gray-800'
+    `hover:text-blue-600 font-medium ${
+      pathname === path ? 'text-blue-700 font-semibold underline underline-offset-4' : 'text-gray-800'
     }`;
 
   return (
     <nav className="bg-white shadow-md w-full sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-2xl">💊</span>
-          <span className="font-bold text-green-700 text-xl">MediConnect</span>
+          <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span className="font-bold text-blue-700 text-xl">Car Rental</span>
         </Link>
 
         {/* Desktop Menu */}
@@ -43,21 +42,21 @@ export default function Navbar() {
             <Link key={item.path} href={item.path} className={linkStyle(item.path)}>
               {item.name}
             </Link>
-
           ))}
         </div>
-        <div>
-        {status === "unauthenticated" ? (
-              <Button asChild variant="outline" className="border-black">
-                <Link href="/api/auth/signin">Login</Link>
-              </Button>
-            ) : (
-              <Button asChild variant="outline" className="border-black">
-                <Link href="/api/auth/signout">Sign Out</Link>
-              </Button>
-            )}
+
+        {/* Auth Button */}
+        <div className="hidden md:block">
+          {status === "unauthenticated" ? (
+            <Button asChild variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
+              <Link href="/api/auth/signin">Login</Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
+              <Link href="/api/auth/signout">Sign Out</Link>
+            </Button>
+          )}
         </div>
-        
 
         {/* Mobile Toggle Button */}
         <button
@@ -76,11 +75,22 @@ export default function Navbar() {
               key={item.path}
               href={item.path}
               className={`${linkStyle(item.path)} block`}
-              onClick={() => setMenuOpen(false)} // Close menu on selection
+              onClick={() => setMenuOpen(false)}
             >
               {item.name}
             </Link>
           ))}
+          <div className="pt-2">
+            {status === "unauthenticated" ? (
+              <Button asChild variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
+                <Link href="/api/auth/signin">Login</Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
+                <Link href="/api/auth/signout">Sign Out</Link>
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </nav>
