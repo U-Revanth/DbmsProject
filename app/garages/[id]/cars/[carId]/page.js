@@ -268,7 +268,7 @@ export default function CarBooking({ params }) {
               <h2 className="text-xl font-semibold mb-4">Car Details</h2>
               <p className="text-gray-600">Year: {car.year}</p>
               <p className="text-gray-600">
-                Price per day: ${Number(car.price_per_day).toFixed(2)}
+                Price per day: ₹{Number(car.price_per_day).toFixed(2)}
               </p>
               {car.status === 'maintenance' && (
                 <p className="text-red-500 font-semibold mt-2">
@@ -365,12 +365,12 @@ export default function CarBooking({ params }) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Price per Day:</span>
-                    <span className="font-medium">${Number(car.price_per_day).toFixed(2)}</span>
+                    <span className="font-medium">₹{Number(car.price_per_day).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between border-t pt-4">
                     <span className="text-lg font-semibold">Total Price:</span>
                     <span className="text-lg font-semibold text-blue-600">
-                      ${calculateTotalPrice().toFixed(2)}
+                      {calculateTotalPrice().toFixed(2)}
                     </span>
                   </div>
                 </>

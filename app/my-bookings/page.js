@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { format, parseISO } from 'date-fns';
 import { Button } from "@/components/ui/button";
-import { Filter, Calendar, Car, ChevronDown, ChevronUp } from 'lucide-react';
+import { Filter, Calendar, Car, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 
 export default function MyBookings() {
   const { data: session, status } = useSession();
@@ -256,11 +256,22 @@ export default function MyBookings() {
                         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                       </span>
                     </div>
+                    <div className="mt-2 text-gray-600">
+                      <div className="flex items-start">
+                        <MapPin className="w-4 h-4 mt-1 mr-2 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium">Pickup Location:</p>
+                          <p>{booking.car.garage.name}</p>
+                          <p>{booking.car.garage.address}</p>
+                          <p>{booking.car.garage.city}, {booking.car.garage.state} {booking.car.garage.country}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-semibold text-gray-900">
-                    ${Number(booking.total_price).toFixed(2)}
+                    ₹{Number(booking.total_price).toFixed(2)}
                   </p>
                   <p className="text-sm text-gray-600">Total Price</p>
                   {booking.status === 'confirmed' && (

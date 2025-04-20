@@ -122,7 +122,7 @@ export default function GarageCars({ params }) {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Price per day</span>
                   <span className="text-lg font-semibold text-gray-900">
-                    ${car.price_per_day}
+                    ₹{car.price_per_day}
                   </span>
                 </div>
 

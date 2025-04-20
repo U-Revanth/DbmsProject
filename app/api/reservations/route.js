@@ -47,6 +47,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    console.log('Starting reservation creation...');
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
@@ -57,6 +58,7 @@ export async function POST(request) {
     }
 
     const { car_id, pickup_date, return_date, total_price } = await request.json();
+    console.log('Received booking request:', { car_id, pickup_date, return_date, total_price });
 
     // Check if the car exists and is available
     const car = await prisma.car.findUnique({
@@ -87,6 +89,8 @@ export async function POST(request) {
       );
     }
 
+    console.log('Found car:', { car_id: car.car_id, status: car.status });
+
     if (car.status !== 'available') {
       return NextResponse.json(
         { error: 'Car is not available for reservation' },
@@ -101,29 +105,42 @@ export async function POST(request) {
       );
     }
 
-    // Create the reservation
-    const reservation = await prisma.reservation.create({
-      data: {
-        user_id: session.user.id,
-        car_id,
-        pickup_date: new Date(pickup_date),
-        return_date: new Date(return_date),
-        total_price,
-        status: 'confirmed',
-      },
+    // Start a transaction to create the reservation and update car status
+    const result = await prisma.$transaction(async (prisma) => {
+      // Create the reservation
+      const reservation = await prisma.reservation.create({
+        data: {
+          user_id: session.user.id,
+          car_id,
+          pickup_date: new Date(pickup_date),
+          return_date: new Date(return_date),
+          total_price,
+          status: 'confirmed',
+        },
+      });
+
+      console.log('Created reservation:', reservation);
+
+      // Update car status to rented
+      const updatedCar = await prisma.car.update({
+        where: { car_id },
+        data: { status: 'rented' },
+        select: {
+          car_id: true,
+          status: true
+        }
+      });
+
+      console.log('Updated car status:', updatedCar);
+
+      return reservation;
     });
 
-    // Update car status
-    await prisma.car.update({
-      where: { car_id },
-      data: { status: 'rented' },
-    });
-
-    return NextResponse.json(reservation);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error creating reservation:', error);
     return NextResponse.json(
-      { error: 'Failed to create reservation' },
+      { error: 'Failed to create reservation', details: error.message },
       { status: 500 }
     );
   }
