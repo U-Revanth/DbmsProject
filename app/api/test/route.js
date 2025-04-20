@@ -4,34 +4,36 @@ import prisma from '@/lib/prisma';
 export async function GET() {
   try {
     console.log('Testing database connection...');
-    
-    // Test 1: Simple query to check connection
-    const testQuery = await prisma.$queryRaw`SELECT 1 as test`;
-    console.log('Test query result:', testQuery);
+    await prisma.$connect();
+    console.log('Database connected successfully');
 
-    // Test 2: Count offices
-    const officeCount = await prisma.office.count();
-    console.log('Office count:', officeCount);
+    // Test query to get all cars
+    const cars = await prisma.car.findMany({
+      take: 5, // Limit to 5 cars for testing
+      select: {
+        car_id: true,
+        model: true,
+        make: true,
+        year: true,
+        price_per_day: true,
+        status: true,
+        garage_id: true
+      }
+    });
 
-    // Test 3: Get first office
-    const firstOffice = await prisma.office.findFirst();
-    console.log('First office:', firstOffice);
+    console.log('Found cars:', cars);
 
     return NextResponse.json({
-      status: 'success',
-      testQuery,
-      officeCount,
-      firstOffice,
+      success: true,
+      cars: cars
     });
   } catch (error) {
-    console.error('Database test error:', error);
-    return NextResponse.json(
-      { 
-        status: 'error',
-        error: error.message,
-        stack: error.stack
-      },
-      { status: 500 }
-    );
+    console.error('Test endpoint error:', error);
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 } 
