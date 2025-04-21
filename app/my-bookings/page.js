@@ -5,13 +5,19 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { format, parseISO } from 'date-fns';
 import { Button } from "@/components/ui/button";
-import { Filter, Calendar, Car, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Filter, Calendar, Car, ChevronDown, ChevronUp, MapPin, Star } from 'lucide-react';
 
 export default function MyBookings() {
   const { data: session, status } = useSession();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showReviewForm, setShowReviewForm] = useState(null);
+  const [reviewData, setReviewData] = useState({
+    rating: 0,
+    comment: ''
+  });
+  const [reviewError, setReviewError] = useState('');
   const router = useRouter();
 
   // Filter states
@@ -79,6 +85,42 @@ export default function MyBookings() {
     } catch (err) {
       console.error('Error cancelling booking:', err);
       setError(err.message);
+    }
+  };
+
+  const handleReviewSubmit = async (carId) => {
+    try {
+      setReviewError('');
+      
+      if (reviewData.rating < 1) {
+        setReviewError('Please select a rating');
+        return;
+      }
+
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          car_id: carId,
+          rating: reviewData.rating,
+          comment: reviewData.comment
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit review');
+      }
+
+      // Refresh bookings to update the UI
+      fetchBookings();
+      setShowReviewForm(null);
+      setReviewData({ rating: 0, comment: '' });
+    } catch (err) {
+      setReviewError(err.message);
     }
   };
 
@@ -258,13 +300,21 @@ export default function MyBookings() {
                     </div>
                     <div className="mt-2 text-gray-600">
                       <div className="flex items-start">
-                        <MapPin className="w-4 h-4 mt-1 mr-2 flex-shrink-0" />
-                        <div>
-                          <p className="font-medium">Pickup Location:</p>
-                          <p>{booking.car.garage.name}</p>
-                          <p>{booking.car.garage.address}</p>
-                          <p>{booking.car.garage.city}, {booking.car.garage.state} {booking.car.garage.country}</p>
-                        </div>
+                        {booking.status !== 'completed' ? (
+                          <>
+                            <MapPin className="w-4 h-4 mt-1 mr-2 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium">Pickup Location:</p>
+                              <p>{booking.car.garage.name}</p>
+                              <p>{booking.car.garage.address}</p>
+                              <p>{booking.car.garage.city}, {booking.car.garage.state} {booking.car.garage.country}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-blue-600 italic">
+                            Share your valuable feedback about this ride by writing a review
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -283,8 +333,79 @@ export default function MyBookings() {
                       Cancel Booking
                     </Button>
                   )}
+                  {booking.status === 'completed' && !booking.car.review && (
+                    <Button
+                      onClick={() => setShowReviewForm(booking.car.car_id)}
+                      variant="outline"
+                      className="mt-4 text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      Write a Review
+                    </Button>
+                  )}
                 </div>
               </div>
+
+              {showReviewForm === booking.car.car_id && (
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Rating
+                      </label>
+                      <div className="flex space-x-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => setReviewData({ ...reviewData, rating: star })}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              className={`w-6 h-6 ${
+                                star <= reviewData.rating
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Comment
+                      </label>
+                      <textarea
+                        value={reviewData.comment}
+                        onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        rows={3}
+                        placeholder="Share your experience..."
+                      />
+                    </div>
+                    {reviewError && (
+                      <p className="text-red-500 text-sm">{reviewError}</p>
+                    )}
+                    <div className="flex justify-end space-x-4">
+                      <Button
+                        onClick={() => {
+                          setShowReviewForm(null);
+                          setReviewData({ rating: 0, comment: '' });
+                        }}
+                        variant="outline"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => handleReviewSubmit(booking.car.car_id)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Submit Review
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
 

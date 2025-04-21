@@ -71,6 +71,7 @@ model car {
   status            car_status?   @default(available)
   garage            garage        @relation(fields: [garage_id], references: [garage_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_car_garage")
   reservation       reservation[]
+  review            review[]
 
   @@index([garage_id], map: "fk_car_garage")
 }
@@ -102,6 +103,16 @@ model garage {
   longitude Decimal? @db.Decimal(10, 7)
   phone     String?  @db.VarChar(20)
   car       car[]
+}
+
+model review {
+  review_id Int      @id @default(autoincrement())
+  comment   String?  @db.Text
+  rating    Decimal? @db.Decimal(2, 1)
+  car_id    String?  @db.VarChar(10)
+  car       car?     @relation(fields: [car_id], references: [car_id], onDelete: Cascade, onUpdate: NoAction, map: "review_ibfk_1")
+
+  @@index([car_id], map: "car_id")
 }
 
 enum reservation_status {

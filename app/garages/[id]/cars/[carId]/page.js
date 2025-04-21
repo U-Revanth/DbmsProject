@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import { format, isWithinInterval, addDays, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isBefore, parseISO } from 'date-fns';
+import { Star, MessageSquare, X } from 'lucide-react';
 
 export default function CarBooking({ params }) {
   const resolvedParams = use(params);
@@ -17,6 +18,9 @@ export default function CarBooking({ params }) {
   const [maintenanceDates, setMaintenanceDates] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [success, setSuccess] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [showReviews, setShowReviews] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,6 +61,22 @@ export default function CarBooking({ params }) {
       }
     } catch (err) {
       console.error('Failed to fetch all bookings');
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const response = await fetch(`/api/cars/${resolvedParams.carId}/reviews`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setReviews(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -285,6 +305,18 @@ export default function CarBooking({ params }) {
                   ))}
                 </div>
               )}
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setShowReviews(true);
+                    fetchReviews();
+                  }}
+                  className="flex items-center text-blue-600 hover:text-blue-700"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  View Reviews
+                </button>
+              </div>
             </div>
 
             <div>
@@ -418,6 +450,61 @@ export default function CarBooking({ params }) {
                     Return to Home
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reviews Modal */}
+        {showReviews && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Reviews for {car.make} {car.model}</h2>
+                  <button
+                    onClick={() => setShowReviews(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {reviewsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <p className="text-gray-600 text-center py-8">No reviews yet</p>
+                ) : (
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review.review_id} className="border-b pb-6 last:border-b-0">
+                        <div className="flex items-center mb-2">
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                            <span className="text-gray-500">👤</span>
+                          </div>
+                          <div>
+                            <p className="font-semibold">Anonymous User</p>
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < review.rating
+                                      ? 'text-yellow-400 fill-current'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-gray-600">{review.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
